@@ -55,28 +55,37 @@ summarize_tool= {
 # Bundle them into a list — this is what we'll hand to Claude
 tools = [weather_tool, summarize_tool]
 
-response = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=200,
-    tools=tools,
-    messages=[
-        {"role": "user", "content": "what's the weather in Charleston"}
-    ]
-)
-
-print(response.content)
-
-
 tool_map = {
     "get_weather": get_weather,
     "summarize_text" : summarize_text,   
-    
     }
 
-func = tool_map[response.content[0].name]
-result = func(**response.content[0].input)
+while True:
+    user_input = input("You: ")
+    
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=200,
+        tools=tools,
+        messages=[
+            {"role": "user", "content": user_input}
+        ]
+    )
 
-print(result)
+    print(response.content)
+
+    for block in response.content:
+        
+        if block.type == 'tool_use':
+            func = tool_map[block.name]
+            result = func(**block.input)
+            print(result)
+            
+        elif block.type == 'text':
+            print(block.text)
+        
+
+
 
 
 
